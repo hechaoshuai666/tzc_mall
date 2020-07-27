@@ -1,2 +1,1 @@
-# tzc_mall
-I hope this project will be the office mall of tzc
+# There's nothing shiny,but If there is any code that can help you, please give a star
