@@ -7,7 +7,21 @@ from django.views import View
 from django import http
 from django.contrib.auth import login
 
+from tzc_mall.utils.response_code import RETCODE
 from . import models
+
+class UsernameCountView(View):
+    """判断用户名是否重复注册"""
+
+    def get(self, request, username):
+        """
+        :param request: 请求对象
+        :param username: 用户名
+        :return: JSON
+        """
+        count = models.User.objects.filter(username=username).count()
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'count': count})
+
 
 class RegisterView(View):
     """用户注册"""
