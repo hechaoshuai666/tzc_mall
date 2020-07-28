@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.views import View
 
+
 class RegisterView(View):
     """用户注册"""
 
@@ -11,3 +12,10 @@ class RegisterView(View):
         :return: 注册界面
         """
         return render(request, 're')
+
+    def post(self, request):
+        """
+        实现用户注册
+        :param request: 请求对象
+        :return: 注册结果
+        """
