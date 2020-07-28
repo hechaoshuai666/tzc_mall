@@ -42,7 +42,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # 注册用户app
-    'users'
+    'users',
+    # 注册首页
+    'contents'
+
 ]
 
 MIDDLEWARE = [
@@ -70,7 +73,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
             ],
             # render jinja2 templates environment
-            'environment': 'meiduo_mall.utils.jinja2_env.jinja2_environment',
+            'environment': 'tzc_mall.utils.jinja2_env.jinja2_environment',
         },
     },
 ]
