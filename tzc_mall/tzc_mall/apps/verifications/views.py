@@ -1,5 +1,6 @@
 import logging
 import random
+import json
 
 from django.views import View
 from django import http
@@ -11,6 +12,7 @@ from . import constants
 from .libs.yuntongxun.ccp_sms import CCP
 
 logger = logging.getLogger('django')
+
 
 class ImageCodeView(View):
     """图形验证码"""
@@ -33,13 +35,18 @@ class ImageCodeView(View):
 
 class SMSCodeView(View):
     """短信验证码"""
-
     def get(self, reqeust, mobile):
         """
         :param reqeust: 请求对象
         :param mobile: 手机号
         :return: JSON
         """
+        # 创建连接到redis的对象
+        redis_conn = get_redis_connection('verify_code')
+        send_flag = redis_conn.get('send_flag_%s' % mobile)
+        if send_flag:
+            return http.JsonResponse({'code': RETCODE.THROTTLINGERR, 'errmsg': '发送短信过于频繁'})
+
         # 接收参数
         image_code_client = reqeust.GET.get('image_code')
         uuid = reqeust.GET.get('uuid')
@@ -48,8 +55,7 @@ class SMSCodeView(View):
         if not all([image_code_client, uuid]):
             return http.JsonResponse({'code': RETCODE.NECESSARYPARAMERR, 'errmsg': '缺少必传参数'})
 
-        # 创建连接到redis的对象
-        redis_conn = get_redis_connection('verify_code')
+
         # 提取图形验证码
         image_code_server = redis_conn.get('img_%s' % uuid)
         if image_code_server is None:
@@ -70,8 +76,12 @@ class SMSCodeView(View):
         logger.info(sms_code)
         # 保存短信验证码
         redis_conn.setex('sms_%s' % mobile, constants.SMS_CODE_REDIS_EXPIRES, sms_code)
+        # 重新写入send_flag
+        redis_conn.setex('send_flag_%s' % mobile, constants.SEND_SMS_CODE_INTERVAL, 1)
+
         # 发送短信验证码
-        CCP().send_template_sms(mobile,[sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60], constants.SEND_SMS_TEMPLATE_ID)
+        CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60],
+                                constants.SEND_SMS_TEMPLATE_ID)
 
         # 响应结果
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '发送短信成功'})

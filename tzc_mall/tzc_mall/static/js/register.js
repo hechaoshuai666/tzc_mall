@@ -176,6 +176,23 @@ let vm = new Vue({
                 this.error_mobile_message = '您输入的手机号格式不正确';
                 this.error_mobile = true;
             }
+            if (this.error_mobile == false) {
+                let url = '/mobiles/' + this.mobile + '/count/';
+                axios.get(url, {
+                    responseType: 'json'
+                })
+                    .then(response => {
+                        if (response.data.count == 1) {
+                            this.error_mobile_message = '手机号已存在';
+                            this.error_mobile = true;
+                        } else {
+                            this.error_mobile = false;
+                        }
+                    })
+                    .catch(error => {
+                        console.log(error.response);
+                    })
+            }
         },
         // 校验是否勾选协议
         check_allow() {
@@ -196,7 +213,7 @@ let vm = new Vue({
             this.check_sms_code()
 
             // 在校验之后，注册数据中，只要有错误，就禁用掉表单的提交事件
-            if (this.error_sms_code_message == true || this.this.error_image_code == true || this.error_name == true || this.error_password == true || this.error_password2 == true || this.error_mobile == true || this.error_allow == true) {
+            if (this.error_sms_code == true || this.error_image_code == true || this.error_name == true || this.error_password == true || this.error_password2 == true || this.error_mobile == true || this.error_allow == true) {
                 // 禁用掉表单的提交事件
                 window.event.returnValue = false;
             }
