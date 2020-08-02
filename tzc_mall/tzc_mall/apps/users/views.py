@@ -7,6 +7,7 @@ from django.views import View
 from django import http
 from django.contrib.auth import login, authenticate, logout
 from django_redis import get_redis_connection
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from tzc_mall.utils.response_code import RETCODE
 from . import models
@@ -59,6 +60,8 @@ class LoginView(View):
         password = request.POST.get('password')
         remembered = request.POST.get('remembered')
 
+
+
         # 校验参数
         # 判断参数是否齐全
         if not all([username, password]):
@@ -88,7 +91,12 @@ class LoginView(View):
             request.session.set_expiry(None)
 
         # 响应登录结果
-        response = redirect(reverse('contents:index'))
+        next = request.GET.get('next')
+        if next:
+            response = redirect(next)
+        else:
+            response = redirect(reverse('contents:index'))
+
 
 
         response.set_cookie('username',username,max_age=3600 * 24 * 14)
@@ -175,3 +183,10 @@ class LogoutView(View):
         response.delete_cookie('username')
 
         return response
+
+class UserProfile(LoginRequiredMixin,View):
+    """用户中心"""
+
+    def get(self, request):
+        """提供个人信息界面"""
+        return render(request, 'user_profile.html')
