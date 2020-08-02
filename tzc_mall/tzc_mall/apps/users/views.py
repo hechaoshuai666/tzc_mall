@@ -1,4 +1,6 @@
+import json
 import re
+import logging
 
 from django.db import DatabaseError
 from django.shortcuts import render, redirect
@@ -10,7 +12,12 @@ from django_redis import get_redis_connection
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from tzc_mall.utils.response_code import RETCODE
+from tzc_mall.utils.views import LoginRequiredJSONMixin
 from . import models
+from .  import utils
+from celery_tasks.email.tasks import send_verify_email
+
+logger = logging.getLogger('django')
 
 class UsernameCountView(View):
     """判断用户名是否重复注册"""
@@ -196,3 +203,52 @@ class UserProfile(LoginRequiredMixin,View):
             'email_active': request.user.email_active
         }
         return render(request, 'user_profile.html',context)
+
+class EmailView(LoginRequiredJSONMixin,View):
+    def put(self, request):
+        """实现添加邮箱逻辑"""
+        # 接收参数
+        json_dict = json.loads(request.body)
+        email = json_dict.get('email')
+
+        # 校验参数
+        if not email:
+            return http.HttpResponseForbidden('缺少email参数')
+        if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+            return http.HttpResponseForbidden('参数email有误')
+
+        # 赋值email字段
+        try:
+            request.user.email = email
+            request.user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '添加邮箱失败'})
+
+        verify_url = utils.generate_verify_email_url(request.user)
+        send_verify_email.delay(email, verify_url)
+        # 响应添加邮箱结果
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '添加邮箱成功'})
+
+class VerifyEmailView(View):
+
+    def get(self,request):
+        token = request.GET.get('token')
+
+        if not token:
+            return http.HttpResponseBadRequest('缺少token')
+
+        user = utils.check_verify_email_token(token)
+
+        if not user:
+            return http.HttpResponseForbidden('无效的token')
+
+        try:
+            user.email_active = True
+            user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.HttpResponseServerError('激活邮件失败')
+
+            # 返回邮箱验证结果
+        return redirect(reverse('users:user_profile'))
