@@ -42,7 +42,9 @@ INSTALLED_APPS = [
     # 注册用户app
     'users',
     # 注册首页
-    'contents'
+    'contents',
+    # 注册认证模型
+    'oauth'
 
 ]
 
@@ -165,6 +167,10 @@ SESSION_CACHE_ALIAS = "session"
 
 # 指定自定义的用户认证后端
 AUTHENTICATION_BACKENDS = ['users.utils.UsernameMobileAuthBackend']
+
+# 跳转login的地址
+
+LOGIN_URL = '/login/'
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
