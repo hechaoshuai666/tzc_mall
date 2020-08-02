@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
 from django import http
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django_redis import get_redis_connection
 
 from tzc_mall.utils.response_code import RETCODE
@@ -159,5 +159,19 @@ class RegisterView(View):
         response = redirect(reverse('contents:index'))
 
         response.set_cookie('username', username, max_age=3600 * 24 * 14)
+
+        return response
+
+class LogoutView(View):
+    """退出登录"""
+
+    def get(self, request):
+        """实现退出登录逻辑"""
+        # 清理session
+        logout(request)
+        # 退出登录，重定向到登录页
+        response = redirect(reverse('contents:index'))
+        # 退出登录时清除cookie中的username
+        response.delete_cookie('username')
 
         return response
