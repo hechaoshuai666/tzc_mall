@@ -193,7 +193,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # oauth中qq的配置信息
 QQ_CLIENT_ID = '101518219' # 随意填写 目前属于开发阶段
 QQ_CLIENT_SECRET = '418d84ebdc7241efb79536886ae95224' # 随意填写 开发阶段
-QQ_REDIRECT_URI = 'http://127.0.0.1:8000/oauth_callback'
+QQ_REDIRECT_URI = 'http://www.meiduo.site:8000/oauth_callback'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/

@@ -189,4 +189,10 @@ class UserProfile(LoginRequiredMixin,View):
 
     def get(self, request):
         """提供个人信息界面"""
-        return render(request, 'user_profile.html')
+        context = {
+            'username': request.user.username,
+            'mobile': request.user.mobile,
+            'email': request.user.email,
+            'email_active': request.user.email_active
+        }
+        return render(request, 'user_profile.html',context)

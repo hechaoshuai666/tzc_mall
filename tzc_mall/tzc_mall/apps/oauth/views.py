@@ -52,7 +52,7 @@ class QQAuthUserView(View):
             return render(request,'oauth_callback.html',{'access_token_openid':signed_openid})
         else:
             # 存在时,则直接跳转到相关的页面,保存会话内容
-            state = request.GET.get('state') or '/'
+            state = request.GET.get('state')
             login(request,qq_user.user)
             response = redirect(state)
             response.set_cookie('username',qq_user.user.username,3600*24*14)
@@ -109,7 +109,7 @@ class QQAuthUserView(View):
             logger.error(e)
             return render(request, 'oauth_callback.html', {'qq_login_errmsg': 'QQ登录失败'})
 
-        state = request.GET.get('state') or '/'
+        state = request.GET.get('state')
         response = redirect(state)
 
         # 登录时用户名写入到cookie，有效期15天
