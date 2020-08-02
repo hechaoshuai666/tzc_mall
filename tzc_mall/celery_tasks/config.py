@@ -1,7 +1,4 @@
-# !/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Author  : He Qiang
+# Celery配置文件
 
-# 指定消息队列的位置
-broker_url= "redis://192.168.137.128:6379/10"
-
+# 指定中间人、消息队列、任务队列、容器，使用redis
+broker_url = "redis://192.168.137.128/10"

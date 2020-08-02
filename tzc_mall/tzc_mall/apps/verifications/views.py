@@ -1,6 +1,6 @@
 import logging
 import random
-import json
+
 
 from django.views import View
 from django import http
@@ -10,6 +10,7 @@ from tzc_mall.utils.response_code import RETCODE
 from verifications.libs.captcha.captcha import captcha
 from . import constants
 from .libs.yuntongxun.ccp_sms import CCP
+from celery_tasks.sms.tasks import send_sms_code
 
 logger = logging.getLogger('django')
 
@@ -82,8 +83,7 @@ class SMSCodeView(View):
         # 执行请求
         pl.execute()
         # 发送短信验证码
-        CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60],
-                                constants.SEND_SMS_TEMPLATE_ID)
+        send_sms_code.delay(mobile,sms_code)
 
         # 响应结果
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '发送短信成功'})

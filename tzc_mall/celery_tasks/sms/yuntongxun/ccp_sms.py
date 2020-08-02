@@ -3,16 +3,16 @@
 # import ssl
 # ssl._create_default_https_context =ssl._create_stdlib_context # 解决Mac开发环境下，网络错误的问题
 
-from .CCPRestSDK import REST
+from celery_tasks.sms.yuntongxun.CCPRestSDK import REST
 
 # 说明：主账号，登陆云通讯网站后，可在"控制台-应用"中看到开发者主账号ACCOUNT SID
-_accountSid = '8aaf0708732220a60173489776e20f61'
+_accountSid = '8aaf070862181ad5016236f3bcc811d5'
 
 # 说明：主账号Token，登陆云通讯网站后，可在控制台-应用中看到开发者主账号AUTH TOKEN
-_accountToken = '68ba9f297f9f4380bed8afa679ddd825'
+_accountToken = '4e831592bd464663b0de944df13f16ef'
 
 # 请使用管理控制台首页的APPID或自己创建应用的APPID
-_appId = '8aaf0708732220a60173489777a80f68'
+_appId = '8aaf070868747811016883f12ef3062c'
 
 # 说明：请求地址，生产环境配置成app.cloopen.com
 _serverIP = 'sandboxapp.cloopen.com'
@@ -37,34 +37,47 @@ _softVersion = '2013-12-26'
 #     result = rest.sendTemplateSMS(to, datas, tempId)
 #     print(result)
 
+
 class CCP(object):
-    """发送短信的单例类"""
+    """发送短信验证码的单例类"""
 
     def __new__(cls, *args, **kwargs):
-        # 判断是否存在类属性_instance，_instance是类CCP的唯一对象，即单例
-        if not hasattr(CCP, "_instance"):
+        """
+        定义单例的初始化方法
+        :return: 单例
+        """
+        # 判断单例是否存在：_instance属性中存储的就是单例
+        if not hasattr(cls, '_instance'):
+            # 如果单例不存在，初始化单例
             cls._instance = super(CCP, cls).__new__(cls, *args, **kwargs)
+
+            # 初始化REST SDK
             cls._instance.rest = REST(_serverIP, _serverPort, _softVersion)
             cls._instance.rest.setAccount(_accountSid, _accountToken)
             cls._instance.rest.setAppId(_appId)
+
+        # 返回单例
         return cls._instance
 
-    def send_template_sms(self, to, datas, temp_id):
+    def send_template_sms(self, to, datas, tempId):
         """
-        发送模板短信单例方法
-        :param to: 注册手机号
-        :param datas: 模板短信内容数据，格式为列表，例如：['123456', 5]，如不需替换请填 ''
-        :param temp_id: 模板编号，默认免费提供id为1的模板
-        :return: 发短信结果
+        发送短信验证码单例方法
+        :param to: 手机号
+        :param datas: 内容数据
+        :param tempId: 模板ID
+        :return: 成功：0 失败：-1
         """
-        result = self.rest.sendTemplateSMS(to, datas, temp_id)
-        if result.get("statusCode") == "000000":
-            # 返回0，表示发送短信成功
+        result = self.rest.sendTemplateSMS(to, datas, tempId)
+        print(result)
+        if result.get('statusCode') == '000000':
             return 0
         else:
-            # 返回-1，表示发送失败
             return -1
+
 
 if __name__ == '__main__':
     # 注意： 测试的短信模板编号为1
-    sendTemplateSMS('17600992168', ['123456', 5], 1)
+    # sendTemplateSMS('17600992168', ['123456', 5], 1)
+
+    # 单例类发送短信验证码
+    CCP().send_template_sms('17600992168', ['123456', 5], 1)
