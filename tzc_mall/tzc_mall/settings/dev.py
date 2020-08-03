@@ -44,7 +44,9 @@ INSTALLED_APPS = [
     # 注册首页
     'contents',
     # 注册认证模型
-    'oauth'
+    'oauth',
+    # 注册省份地址
+    'areas'
 
 ]
 

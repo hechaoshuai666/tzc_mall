@@ -23,5 +23,17 @@ urlpatterns = [
     url(r'^emails/', views.EmailView.as_view(), ),
     # 处理邮箱激活链接
     url(r'^emails/verification/', views.VerifyEmailView.as_view(), ),
+    # 展示用户地址
+    url(r'^addresses/$', views.AddressView.as_view(), name='address'),
+    # 新增用户地址
+    url(r'^addresses/create/$', views.CreateAddressView.as_view()),
+    # 修改或删除用户地址
+    url(r'^addresses/(?P<address_id>\d+)/$', views.UpdateDestroyAddressView.as_view()),
+    # 设置默认地址
+    url(r'^addresses/(?P<address_id>\d+)/default/$', views.DefaultAddressView.as_view()),
+    # 修改标题
+    url(r'^addresses/(?P<address_id>\d+)/title/$', views.UpdateTitleAddressView.as_view()),
+    # 修改密码
+    url(r'^user_profile_pwd/$', views.ChangePasswordView.as_view(), name='user_profile_pwd'),
 
 ]
