@@ -46,7 +46,9 @@ INSTALLED_APPS = [
     # 注册认证模型
     'oauth',
     # 注册省份地址
-    'areas'
+    'areas',
+    # 注册商品表
+    'goods'
 
 ]
 
