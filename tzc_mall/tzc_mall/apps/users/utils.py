@@ -20,6 +20,24 @@ def verify_account(account):
     else:
         return user
 
+def generate_sign(cache_key):
+    max_age = 3600 * 24 * 14
+    s = Serializer(settings.SECRET_KEY, max_age)
+    sign = s.dumps({'sessionid': cache_key})
+    return sign.decode('utf8')
+
+def check_sign(sign):
+    max_age = 3600 * 24 * 14
+    s = Serializer(settings.SECRET_KEY, max_age)
+    try:
+        ctx = s.loads(sign)
+    except BadData:
+        return None
+    else:
+        sessionid = ctx.get('sessionid')
+        return sessionid
+
+
 def check_verify_email_token(token):
     s = Serializer(settings.SECRET_KEY, constants.VERIFY_EMAIL_TOKEN_EXPIRES)
     try:
@@ -42,7 +60,7 @@ def generate_verify_email_url(user):
         'user_id':user.pk,
         'email':user.email
     }
-    token = s.dumps(context)
+    token = s.dumps(context).decode('utf8')
 
     producted_url = f'{settings.EMAIL_VERIFY_URL}?token={token}'
 

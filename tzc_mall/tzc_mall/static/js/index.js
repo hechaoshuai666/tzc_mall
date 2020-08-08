@@ -35,6 +35,29 @@ let vm = new Vue({
                 .catch(error => {
                     console.log(error.response);
                 })
+        },
+        verify_user() {
+            let sign = getCookie('sign');
+            let url = `/has_expired/?sign=${sign}`
+            axios.get(url, {
+                responseType: 'json'
+            }).then(response => {
+                let backend_ret = response.data
+
+                if (backend_ret.code == 0) {
+                    console.log(backend_ret.errmsg)
+                } else if (backend_ret.code == 4004) {
+                    if (getCookie('username')) {
+                        alert('该账号已在别处登录,请重新登录')
+                        document.cookie = 'username=' + ''
+                    }
+
+                } else {
+                    console.log(backend_ret)
+                }
+            }).catch(error => {
+                console.log(error.response);
+            })
         }
     }
 });

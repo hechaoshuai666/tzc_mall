@@ -11,13 +11,16 @@ from django.contrib.auth import login, authenticate, logout
 from django_redis import get_redis_connection
 from django.contrib.auth.mixins import LoginRequiredMixin
 
+
 from tzc_mall.utils.response_code import RETCODE
 from tzc_mall.utils.views import LoginRequiredJSONMixin
 from . import models, constants
-from .  import utils
+from . import utils
+from .utils import generate_sign,check_sign
 from celery_tasks.email.tasks import send_verify_email
 
 logger = logging.getLogger('django')
+
 
 class UsernameCountView(View):
     """判断用户名是否重复注册"""
@@ -30,6 +33,7 @@ class UsernameCountView(View):
         """
         count = models.User.objects.filter(username=username).count()
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'count': count})
+
 
 class MobileCountView(View):
     """判断手机号是否重复注册"""
@@ -44,7 +48,6 @@ class MobileCountView(View):
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'count': count})
 
 
-
 class LoginView(View):
     """用户名登录"""
 
@@ -54,7 +57,10 @@ class LoginView(View):
         :param request: 请求对象
         :return: 登录界面
         """
-        return render(request, 'login.html')
+        if not request.user.is_authenticated:
+            return render(request, 'login.html')
+        else:
+            return redirect(reverse('contents:index'))
 
     def post(self, request):
         """
@@ -66,8 +72,6 @@ class LoginView(View):
         username = request.POST.get('username')
         password = request.POST.get('password')
         remembered = request.POST.get('remembered')
-
-
 
         # 校验参数
         # 判断参数是否齐全
@@ -82,20 +86,21 @@ class LoginView(View):
         if not re.match(r'^[0-9A-Za-z]{8,20}$', password):
             return http.HttpResponseForbidden('密码最少8位，最长20位')
 
-        # 认证登录用户
+        # 认证用户:使用账号查询用户是否存在，如果用户存在，再校验密码是否正确
         user = authenticate(username=username, password=password)
         if user is None:
-            return render(request, 'login.html', {'account_errmsg': '用户名或密码错误'})
+            return render(request, 'login.html', {'account_errmsg': '账号或密码错误'})
 
+        # 避免用户同时登录
+        conn = get_redis_connection('strict_login')
+        session_key = conn.get(user.username).decode('utf8')
+
+        if session_key:
+            user_conn = get_redis_connection('session')
+            user_conn.delete(f':1:{session_key}')
         # 实现状态保持
         login(request, user)
-        # 设置状态保持的周期
-        if remembered != 'on':
-            # 没有记住用户：浏览器会话结束就过期
-            request.session.set_expiry(0)
-        else:
-            # 记住用户：None表示两周后过期
-            request.session.set_expiry(None)
+        conn.setex(user.username,3600 * 24 * 14,request.session.cache_key)
 
         # 响应登录结果
         next = request.GET.get('next')
@@ -104,11 +109,46 @@ class LoginView(View):
         else:
             response = redirect(reverse('contents:index'))
 
+        # 设置状态保持的周期
+        if remembered != 'on':
+            # 没有记住用户：浏览器会话结束就过期
+            request.session.set_expiry(0)
+            max_age = None
+        else:
+            # 记住用户：None表示两周后过期
+            request.session.set_expiry(None)
+            max_age = 3600 * 24 * 14
 
+        sign = generate_sign(request.session.cache_key)
 
-        response.set_cookie('username',username,max_age=3600 * 24 * 14)
+        response.set_cookie('username', username, max_age)
+        response.set_cookie('sign', sign, max_age)
 
         return response
+
+
+class UserExpiring(View):
+
+    def get(self,request):
+        '''
+
+        :param request:
+        :return: JSON
+        '''
+        sign = request.GET.get('sign')
+        if not sign:
+            return http.JsonResponse({'code':RETCODE.SESSIONERR,'errmsg':'缺少参数'})
+
+        sessionid = check_sign(sign)
+
+        conn = get_redis_connection('session')
+        state = conn.get(f':1:{sessionid}')
+
+        if state:
+            return http.JsonResponse({'code':RETCODE.OK,'errmsg':'ok'})
+        else:
+            return http.JsonResponse({'code':RETCODE.USERERR,'errmsg':'用户信息已失效'})
+
 
 class RegisterView(View):
     """用户注册"""
@@ -135,7 +175,7 @@ class RegisterView(View):
         sms_code_client = request.POST.get('sms_code')
 
         # 判断参数是否齐全
-        if not all([username, password, password2, mobile, allow,sms_code_client]):
+        if not all([username, password, password2, mobile, allow, sms_code_client]):
             return http.HttpResponseForbidden('缺少必传参数')
         # 判断用户名是否是5-20个字符
         if not re.match(r'^[a-zA-Z0-9_-]{5,20}$', username):
@@ -167,15 +207,19 @@ class RegisterView(View):
             return render(request, 'register.html', {'register_errmsg': '注册失败'})
 
         # 状态保持
-        login(request,user)
+        login(request, user)
 
         # 响应注册结果
 
         response = redirect(reverse('contents:index'))
 
+        sign = generate_sign(request.session.cache_key)
         response.set_cookie('username', username, max_age=3600 * 24 * 14)
 
+        response.set_cookie('sign', sign, max_age=3600 * 24 * 14)
+
         return response
+
 
 class LogoutView(View):
     """退出登录"""
@@ -191,7 +235,8 @@ class LogoutView(View):
 
         return response
 
-class UserProfile(LoginRequiredMixin,View):
+
+class UserProfile(LoginRequiredMixin, View):
     """用户中心"""
 
     def get(self, request):
@@ -202,9 +247,10 @@ class UserProfile(LoginRequiredMixin,View):
             'email': request.user.email,
             'email_active': request.user.email_active
         }
-        return render(request, 'user_profile.html',context)
+        return render(request, 'user_profile.html', context)
 
-class EmailView(LoginRequiredJSONMixin,View):
+
+class EmailView(LoginRequiredJSONMixin, View):
     def put(self, request):
         """实现添加邮箱逻辑"""
         # 接收参数
@@ -230,9 +276,10 @@ class EmailView(LoginRequiredJSONMixin,View):
         # 响应添加邮箱结果
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '添加邮箱成功'})
 
+
 class VerifyEmailView(View):
 
-    def get(self,request):
+    def get(self, request):
         token = request.GET.get('token')
 
         if not token:
@@ -260,7 +307,7 @@ class AddressView(LoginRequiredMixin, View):
     def get(self, request):
         """提供收货地址界面"""
         login_user = request.user
-        address_model_list = models.Address.objects.filter(user=login_user,is_deleted=False)
+        address_model_list = models.Address.objects.filter(user=login_user, is_deleted=False)
 
         address_dict_list = []
         for address in address_model_list:
@@ -284,13 +331,14 @@ class AddressView(LoginRequiredMixin, View):
 
         return render(request, 'user_center_site.html', context)
 
-class DefaultAddressView(LoginRequiredJSONMixin,View):
 
-    def put(self,request,address_id):
+class DefaultAddressView(LoginRequiredJSONMixin, View):
+
+    def put(self, request, address_id):
 
         try:
             login_user = request.user
-            is_existed = models.Address.objects.filter(pk=address_id,is_deleted=False).exists()
+            is_existed = models.Address.objects.filter(pk=address_id, is_deleted=False).exists()
             if is_existed:
                 login_user.default_address_id = address_id
                 login_user.save()
@@ -301,7 +349,8 @@ class DefaultAddressView(LoginRequiredJSONMixin,View):
         # 响应设置默认地址结果
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '设置默认地址成功'})
 
-class UpdateTitleAddressView(LoginRequiredJSONMixin,View):
+
+class UpdateTitleAddressView(LoginRequiredJSONMixin, View):
     def put(self, request, address_id):
         """设置地址标题"""
         # 接收参数：地址标题
@@ -321,6 +370,7 @@ class UpdateTitleAddressView(LoginRequiredJSONMixin,View):
 
         # 4.响应删除地址结果
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '设置地址标题成功'})
+
 
 class ChangePasswordView(LoginRequiredMixin, View):
     """修改密码"""
@@ -365,20 +415,19 @@ class ChangePasswordView(LoginRequiredMixin, View):
         # # 响应密码修改结果：重定向到登录界面
         return response
 
-class UpdateDestroyAddressView(LoginRequiredJSONMixin,View):
 
+class UpdateDestroyAddressView(LoginRequiredJSONMixin, View):
 
-    def delete(self,request,address_id):
+    def delete(self, request, address_id):
 
         try:
             address_model = models.Address.objects.get(pk=address_id)
             address_model.is_deleted = True
             address_model.save()
-        except (models.Address.DoesNotExist,DatabaseError):
+        except (models.Address.DoesNotExist, DatabaseError):
             return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '删除地址失败'})
 
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '删除地址成功'})
-
 
     def put(self, request, address_id):
         """修改地址"""
@@ -439,7 +488,8 @@ class UpdateDestroyAddressView(LoginRequiredJSONMixin,View):
         # 响应更新地址结果
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '更新地址成功', 'address': address_dict})
 
-class CreateAddressView(LoginRequiredJSONMixin,View):
+
+class CreateAddressView(LoginRequiredJSONMixin, View):
 
     def post(self, request):
         """实现新增地址逻辑"""

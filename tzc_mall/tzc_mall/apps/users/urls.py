@@ -4,6 +4,7 @@
 
 from django.conf.urls import url
 
+
 from . import views
 
 urlpatterns = [
@@ -19,6 +20,8 @@ urlpatterns = [
     url(r'^logout/$', views.LogoutView.as_view(), name='logout'),
     # 用户中心
     url(r'^user_profile/$', views.UserProfile.as_view(), name='user_profile'),
+    # 验证用户是否多次登录
+    url(r'^has_expired/$', views.UserExpiring.as_view()),
     # 发送邮箱
     url(r'^emails/', views.EmailView.as_view(), ),
     # 处理邮箱激活链接
