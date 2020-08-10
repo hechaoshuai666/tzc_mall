@@ -88,7 +88,7 @@ class SKU(BaseModel):
     name = models.CharField(max_length=50, verbose_name='名称')
     caption = models.CharField(max_length=100, verbose_name='副标题')
     spu = models.ForeignKey(SPU, on_delete=models.CASCADE, verbose_name='商品')
-    category = models.ForeignKey(GoodsCategory, on_delete=models.PROTECT, verbose_name='从属类别')
+    category = models.ForeignKey(GoodsCategory,related_name='skus', on_delete=models.PROTECT, verbose_name='从属类别')
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='单价')
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='进价')
     market_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='市场价')
@@ -96,7 +96,7 @@ class SKU(BaseModel):
     sales = models.IntegerField(default=0, verbose_name='销量')
     comments = models.IntegerField(default=0, verbose_name='评价数')
     is_launched = models.BooleanField(default=True, verbose_name='是否上架销售')
-    default_image_url = models.CharField(max_length=200, default='', null=True, blank=True, verbose_name='默认图片')
+    default_image = models.ImageField(max_length=200, default='', null=True, blank=True, verbose_name='默认图片')
 
     class Meta:
         db_table = 'tb_sku'
