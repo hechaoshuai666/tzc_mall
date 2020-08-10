@@ -236,3 +236,9 @@ EMAIL_HOST_PASSWORD = 'OXUSPYKYKGDVCAUA'  # 邮箱授权时获得的密码，非
 EMAIL_FROM = 'tzc_mall<hechaoshuai@yeah.net>'  # 发件人抬头
 
 EMAIL_VERIFY_URL = 'http://127.0.0.1/emails/verification/'
+
+# 指定自定义的Django文件存储类
+DEFAULT_FILE_STORAGE = 'tzc_mall.utils.fastdfs.fastdfs_storage.FastDFSStorage'
+
+# 文件路径所在的ip
+FDFS_BASE_URL = 'http://192.168.137.130:8888/'
