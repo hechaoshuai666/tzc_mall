@@ -29,5 +29,7 @@ urlpatterns = [
     # areas
     url(r'^', include('areas.urls')),
     # areas
-    url(r'^', include('goods.urls',namespace='goods')),
+    url(r'^', include('goods.urls', namespace='goods')),
+    # search
+    url(r'^search/', include('haystack.urls')),
 ]
