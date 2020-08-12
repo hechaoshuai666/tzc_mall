@@ -167,9 +167,16 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
-    "strict_login": {  # 验证码
+    "strict_login": {  # 避免重复登录
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://192.168.137.130:6379/3",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    "history": {  # 用户浏览记录
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://192.168.137.130:6379/4",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -249,8 +256,8 @@ FDFS_BASE_URL = 'http://192.168.137.130:8888/'
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
-        'URL': 'http://192.168.137.130:9200/', # Elasticsearch服务器ip地址，端口号固定为9200
-        'INDEX_NAME': 'tzc_mall', # Elasticsearch建立的索引库的名称
+        'URL': 'http://192.168.137.130:9200/',  # Elasticsearch服务器ip地址，端口号固定为9200
+        'INDEX_NAME': 'tzc_mall',  # Elasticsearch建立的索引库的名称
     },
 }
 
