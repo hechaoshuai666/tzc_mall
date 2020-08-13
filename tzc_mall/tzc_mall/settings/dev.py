@@ -50,7 +50,9 @@ INSTALLED_APPS = [
     # 注册商品表
     'goods',
     # 全文检索
-    'haystack'
+    'haystack',
+    # 购物车
+    'carts'
 
 ]
 
@@ -177,6 +179,13 @@ CACHES = {
     "history": {  # 用户浏览记录
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://192.168.137.130:6379/4",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    "carts": {  # 用户浏览记录
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://192.168.137.130:6379/5",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }

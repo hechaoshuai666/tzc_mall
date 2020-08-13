@@ -12,7 +12,7 @@ urlpatterns = [
     # 热销排行
     url(r'^hot/(?P<category_id>\d+)/', views.HotView.as_view()),
     # 商品详情
-    url(r'^detail/(?P<sku_id>\d+)/', views.DetailView.as_view()),
+    url(r'^detail/(?P<sku_id>\d+)/', views.DetailView.as_view(),name='detail'),
     # 统计商品数量
     url(r'^detail/visit/(?P<category_id>\d+)/', views.DetailVisitView.as_view()),
 
