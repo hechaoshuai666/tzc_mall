@@ -52,7 +52,9 @@ INSTALLED_APPS = [
     # 全文检索
     'haystack',
     # 购物车
-    'carts'
+    'carts',
+    # 订单
+    'orders',
 
 ]
 
