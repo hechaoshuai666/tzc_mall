@@ -11,6 +11,7 @@ from django.views import View
 from django import http
 from django_redis import get_redis_connection
 
+from carts.utils import merge_cart_cookie_to_redis
 from tzc_mall.utils.response_code import RETCODE
 from .utils import generate_signed_openid,check_signed_openid
 from .models import OAuthQQUser
@@ -112,6 +113,7 @@ class QQAuthUserView(View):
         state = request.GET.get('state')
         response = redirect(state)
 
+        response = merge_cart_cookie_to_redis(request=request, user=user, response=response)
         # 登录时用户名写入到cookie，有效期15天
         response.set_cookie('username', user.username, max_age=3600 * 24 * 14)
 

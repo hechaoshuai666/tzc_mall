@@ -11,7 +11,7 @@ from django.contrib.auth import login, authenticate, logout
 from django_redis import get_redis_connection
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-
+from carts.utils import merge_cart_cookie_to_redis
 from tzc_mall.utils.response_code import RETCODE
 from tzc_mall.utils.views import LoginRequiredJSONMixin
 from . import models, constants
@@ -110,6 +110,7 @@ class LoginView(View):
         else:
             response = redirect(reverse('contents:index'))
 
+        response = merge_cart_cookie_to_redis(request=request, user=user, response=response)
         # 设置状态保持的周期
         if remembered != 'on':
             # 没有记住用户：浏览器会话结束就过期
@@ -124,6 +125,7 @@ class LoginView(View):
 
         response.set_cookie('username', username, max_age)
         response.set_cookie('sign', sign, max_age)
+        # 合并购物车
 
         return response
 
@@ -214,6 +216,7 @@ class RegisterView(View):
 
         response = redirect(reverse('contents:index'))
 
+        response = merge_cart_cookie_to_redis(request=request, user=user, response=response)
         sign = generate_sign(request.session.cache_key)
         response.set_cookie('username', username, max_age=3600 * 24 * 14)
 
