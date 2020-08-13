@@ -56,6 +56,7 @@ class QQAuthUserView(View):
             state = request.GET.get('state')
             login(request,qq_user.user)
             response = redirect(state)
+            response = merge_cart_cookie_to_redis(request=request, user=qq_user.user, response=response)
             response.set_cookie('username',qq_user.user.username,3600*24*14)
 
             return response
