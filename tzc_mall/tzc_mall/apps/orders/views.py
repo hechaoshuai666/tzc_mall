@@ -3,6 +3,7 @@ import logging
 from decimal import Decimal
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator, EmptyPage
 from django.shortcuts import render
 from django import http
 from django.utils import timezone
@@ -183,3 +184,59 @@ class OrderCommitView(LoginRequiredJSONMixin, View):
 
         # 响应提交订单结果
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '下单成功', 'order_id': order.order_id})
+
+class OrderSuccessView(LoginRequiredMixin, View):
+    """提交订单成功"""
+
+    def get(self, request):
+        order_id = request.GET.get('order_id')
+        payment_amount = request.GET.get('payment_amount')
+        pay_method = request.GET.get('pay_method')
+
+        context = {
+            'order_id':order_id,
+            'payment_amount':payment_amount,
+            'pay_method':pay_method
+        }
+        return render(request, 'order_success.html', context)
+
+
+class UserOrderInfoView(LoginRequiredMixin, View):
+    """我的订单"""
+
+    def get(self, request, page_num):
+        """提供我的订单页面"""
+        user = request.user
+        # 查询订单
+        orders = user.orderinfo_set.all().order_by("-create_time")
+        # 遍历所有订单
+        for order in orders:
+            # 绑定订单状态
+            order.status_name = OrderInfo.ORDER_STATUS_CHOICES[order.status-1][1]
+            # 绑定支付方式
+            order.pay_method_name = OrderInfo.PAY_METHOD_CHOICES[order.pay_method-1][1]
+            order.sku_list = []
+            # 查询订单商品
+            order_goods = order.skus.all()
+            # 遍历订单商品
+            for order_good in order_goods:
+                sku = order_good.sku
+                sku.count = order_good.count
+                sku.amount = sku.price * sku.count
+                order.sku_list.append(sku)
+
+        # 分页
+        page_num = int(page_num)
+        try:
+            paginator = Paginator(orders,2)
+            page_orders = paginator.page(page_num)
+            total_page = paginator.num_pages
+        except EmptyPage:
+            return http.HttpResponseNotFound('订单不存在')
+
+        context = {
+            "page_orders": page_orders,
+            'total_page': total_page,
+            'page_num': page_num,
+        }
+        return render(request, "user_center_order.html", context)
