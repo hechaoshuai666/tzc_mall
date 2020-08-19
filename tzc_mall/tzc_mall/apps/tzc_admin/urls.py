@@ -7,4 +7,6 @@ urlpatterns = [
     url(r'^authorizations',obtain_jwt_token),
     # 用户总数
     url(r'^statistical/total_count',statistical.UserTotalCountView.as_view()),
+    # 日增用户
+    url(r'^statistical/day_increment',statistical.DayUserIncrementCountView.as_view()),
 ]
