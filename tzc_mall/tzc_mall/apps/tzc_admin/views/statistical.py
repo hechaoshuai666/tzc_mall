@@ -68,3 +68,23 @@ class DayUserActiveCountView(APIView):
             'count': count,
             'data': now_date
         })
+
+
+class DayUserOrderCountView(APIView):
+    '''
+    当日下单用户数量统计
+    '''
+
+    # 仅后台用户访问
+    permission_classes = (IsAdminUser,)
+
+    def get(self,request):
+        # 获取当天日期
+        now_date = date.today()
+
+        count = User.objects.filter(orderinfo__create_time__gte=now_date).distinct().count()
+
+        return Response({
+            'count': count,
+            'data': now_date
+        })
