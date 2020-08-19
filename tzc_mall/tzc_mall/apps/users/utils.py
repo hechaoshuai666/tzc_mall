@@ -70,10 +70,20 @@ def generate_verify_email_url(user):
 class CheckAccountModel(ModelBackend):
 
     def authenticate(self, request, username=None, password=None, **kwargs):
+        # 后台用户逻辑
+        if request is None:
+            try:
+                user = User.objects.get(username=username,is_superuser=True)
+            except User.DoesNotExist:
+                user = None
 
-        user = verify_account(username)
-
-        if user and user.check_password(password):
-            return user
+            if user is not None and user.check_password(password):
+                return user
+        # 前台用户
         else:
-            return None
+            user = verify_account(username)
+
+            if user and user.check_password(password):
+                return user
+            else:
+                return None

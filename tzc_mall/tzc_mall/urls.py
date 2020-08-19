@@ -38,4 +38,6 @@ urlpatterns = [
     url(r'^', include('orders.urls',namespace='orders')),
     # payment
     url(r'^', include('payment.urls')),
+    # jwt
+    url(r'^tzc_admin/', include('tzc_admin.urls')),
 ]

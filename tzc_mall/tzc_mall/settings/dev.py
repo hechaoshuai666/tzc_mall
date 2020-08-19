@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import os, sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+import datetime
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # 追加导包路径
@@ -40,29 +42,19 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_crontab',  # 定时任务
-    # 注册用户app
-    'users',
-    # 注册首页
-    'contents',
-    # 注册认证模型
-    'oauth',
-    # 注册省份地址
-    'areas',
-    # 注册商品表
-    'goods',
-    # 全文检索
-    'haystack',
-    # 购物车
-    'carts',
-    # 订单
-    'orders',
-    # 支付
-    'payment',
-    # 后台管理
-    'tzc_admin',
-    # 跨域访问
-    'corsheaders',
-
+    'users',    # 注册用户app
+    'contents',    # 注册首页
+    'oauth',    # 注册认证模型
+    'areas',    # 注册省份地址
+    'goods',    # 注册商品表
+    'haystack',    # 全文检索
+    'carts',    # 购物车
+    'orders',    # 订单
+    'payment',    # 支付
+    'tzc_admin',    # 后台管理
+    'corsheaders',    # 跨域访问
+    'rest_framework', # drf
+    'rest_framework_jwt', # jwt
 ]
 
 MIDDLEWARE = [
@@ -84,14 +76,15 @@ TEMPLATES = [
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
+            # render jinja2 templates environment
+            'environment': 'tzc_mall.utils.jinja2_env.jinja2_environment',
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
-            # render jinja2 templates environment
-            'environment': 'tzc_mall.utils.jinja2_env.jinja2_environment',
+
         },
     },
 ]
@@ -113,17 +106,17 @@ DATABASES = {
         'PASSWORD': '123',  # password
         'NAME': 'tzc_mall'  # databasename
     },
-    'slave': {  # 读（从机）
-        'ENGINE': 'django.db.backends.mysql',
-        'HOST': '192.168.137.131',
-        'PORT': 8306,
-        'USER': 'root',
-        'PASSWORD': 'mysql',
-        'NAME': 'tzc_mall'
-    }
+    # 'slave': {  # 读（从机）
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'HOST': '192.168.137.131',
+    #     'PORT': 8306,
+    #     'USER': 'root',
+    #     'PASSWORD': 'mysql',
+    #     'NAME': 'tzc_mall'
+    # }
 }
 
-DATABASE_ROUTERS = ['tzc_mall.utils.db_router.MasterSlaveDBRouter']
+# DATABASE_ROUTERS = ['tzc_mall.utils.db_router.MasterSlaveDBRouter']
 
 LOGGING = {
     'version': 1,
@@ -307,3 +300,18 @@ CRONJOBS = [
 ]
 
 CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+}
+
+JWT_AUTH = {
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),
+'JWT_RESPONSE_PAYLOAD_HANDLER': 'tzc_admin.utils.jwt_response_payload_handler',
+}
+
