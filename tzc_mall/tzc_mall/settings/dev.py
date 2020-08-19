@@ -60,10 +60,13 @@ INSTALLED_APPS = [
     'payment',
     # 后台管理
     'tzc_admin',
+    # 跨域访问
+    'corsheaders',
 
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -104,7 +107,7 @@ WSGI_APPLICATION = 'tzc_mall.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # database engine
-        'HOST': '192.168.137.130',  # database host
+        'HOST': '192.168.137.131',  # database host
         'PORT': 3306,  # port
         'USER': 'tzc',  # username
         'PASSWORD': '123',  # password
@@ -112,7 +115,7 @@ DATABASES = {
     },
     'slave': {  # 读（从机）
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': '192.168.137.130',
+        'HOST': '192.168.137.131',
         'PORT': 8306,
         'USER': 'root',
         'PASSWORD': 'mysql',
@@ -120,7 +123,7 @@ DATABASES = {
     }
 }
 
-DATABASE_ROUTERS = ['meiduo_mall.utils.db_router.MasterSlaveDBRouter']
+DATABASE_ROUTERS = ['tzc_mall.utils.db_router.MasterSlaveDBRouter']
 
 LOGGING = {
     'version': 1,
@@ -167,42 +170,42 @@ LOGGING = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.137.130:6379/0",
+        "LOCATION": "redis://192.168.137.131:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "session": {  # session
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.137.130:6379/1",
+        "LOCATION": "redis://192.168.137.131:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "verify_code": {  # 验证码
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.137.130:6379/2",
+        "LOCATION": "redis://192.168.137.131:6379/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "strict_login": {  # 避免重复登录
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.137.130:6379/3",
+        "LOCATION": "redis://192.168.137.131:6379/3",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "history": {  # 用户浏览记录
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.137.130:6379/4",
+        "LOCATION": "redis://192.168.137.131:6379/4",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "carts": {  # 用户浏览记录
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.137.130:6379/5",
+        "LOCATION": "redis://192.168.137.131:6379/5",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -276,13 +279,13 @@ EMAIL_VERIFY_URL = 'http://127.0.0.1/emails/verification/'
 DEFAULT_FILE_STORAGE = 'tzc_mall.utils.fastdfs.fastdfs_storage.FastDFSStorage'
 
 # 文件路径所在的ip
-FDFS_BASE_URL = 'http://192.168.137.130:8888/'
+FDFS_BASE_URL = 'http://192.168.137.131:8888/'
 
 # Haystack
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
-        'URL': 'http://192.168.137.130:9200/',  # Elasticsearch服务器ip地址，端口号固定为9200
+        'URL': 'http://192.168.137.131:9200/',  # Elasticsearch服务器ip地址，端口号固定为9200
         'INDEX_NAME': 'tzc_mall',  # Elasticsearch建立的索引库的名称
     },
 }
