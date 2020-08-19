@@ -243,7 +243,7 @@ QQ_REDIRECT_URI = 'http://www.meiduo.site:8000/oauth_callback'
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 

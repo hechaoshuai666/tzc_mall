@@ -49,3 +49,22 @@ class DayUserIncrementCountView(APIView):
             'count': count,
             'data': now_date
         })
+
+class DayUserActiveCountView(APIView):
+    '''
+    当日登录用户数量统计
+    '''
+
+    # 仅后台用户访问
+    permission_classes = (IsAdminUser,)
+
+    def get(self, request):
+        # 获取当天日期
+        now_date = date.today()
+
+        count = User.objects.filter(last_login__gte=now_date).count()
+
+        return Response({
+            'count': count,
+            'data': now_date
+        })
