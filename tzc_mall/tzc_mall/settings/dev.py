@@ -58,6 +58,8 @@ INSTALLED_APPS = [
     'orders',
     # 支付
     'payment',
+    # 后台管理
+    'tzc_admin',
 
 ]
 
