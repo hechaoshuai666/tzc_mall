@@ -8,7 +8,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.models import User
-
+from goods.models import GoodsVisitCount
+from ..serializers.statistical import GoodsVisitCountSerializer
 
 class UserTotalCountView(APIView):
     '''
@@ -117,3 +118,21 @@ class DayMonthIncrementCountView(APIView):
             })
 
         return Response(data_list)
+
+class DayGoodsCountView(APIView):
+    '''
+    商品日访问量统计
+    '''
+
+    # 仅后台用户访问
+    permission_classes = (IsAdminUser,)
+
+    def get(self,request):
+
+        now_date = date.today()
+
+        goods_queryset = GoodsVisitCount.objects.filter(date__gte=now_date)
+
+        ser = GoodsVisitCountSerializer(goods_queryset,many=True)
+
+        return Response(ser.data)
