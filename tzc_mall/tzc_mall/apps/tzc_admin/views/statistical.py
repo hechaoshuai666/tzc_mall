@@ -1,8 +1,7 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 # @Author  : He Qiang
-from datetime import date
-
+from datetime import date, timedelta
 
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
@@ -19,15 +18,15 @@ class UserTotalCountView(APIView):
     # 仅后台用户访问
     permission_classes = (IsAdminUser,)
 
-    def get(self,request):
+    def get(self, request):
         # 获取当天日期
         now_date = date.today()
 
         count = User.objects.count()
 
         return Response({
-            'count':count,
-            'data':now_date
+            'count': count,
+            'data': now_date
         })
 
 
@@ -49,6 +48,7 @@ class DayUserIncrementCountView(APIView):
             'count': count,
             'data': now_date
         })
+
 
 class DayUserActiveCountView(APIView):
     '''
@@ -78,7 +78,7 @@ class DayUserOrderCountView(APIView):
     # 仅后台用户访问
     permission_classes = (IsAdminUser,)
 
-    def get(self,request):
+    def get(self, request):
         # 获取当天日期
         now_date = date.today()
 
@@ -88,3 +88,32 @@ class DayUserOrderCountView(APIView):
             'count': count,
             'data': now_date
         })
+
+
+class DayMonthIncrementCountView(APIView):
+    '''
+    月增用户数量统计
+    '''
+
+    # 仅后台用户访问
+    permission_classes = (IsAdminUser,)
+
+    def get(self, request):
+        # 获取当天日期
+        now_date = date.today()
+
+        last_date = now_date - timedelta(days=29)
+
+        data_list = []
+
+        for i in range(30):
+            begin_date = last_date + timedelta(days=i)
+            end_date = last_date + timedelta(days=i + 1)
+
+            count = User.objects.filter(date_joined__gte=begin_date, date_joined__lt=end_date).count()
+            data_list.append({
+                'count': count,
+                'date': begin_date
+            })
+
+        return Response(data_list)
